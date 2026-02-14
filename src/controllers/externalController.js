@@ -79,5 +79,42 @@ const buscarCategorias = async (req, res) => {
         res.status(500).json({ error: error.message});
     }
 };
+const buscarProductosConQuery = async (req, res) => {
+    try {
+        const { q } = req.query;
 
-module.exports = { poblarTablas, buscarProductos, buscarCategorias };
+        if (!q || q.trim() === '') {
+            return res.status(400).json({ error: 'El parámetro de búsqueda "q" es requerido' });
+        }
+        const query = `
+            SELECT p.*, c.nombre AS categoria_nombre
+            FROM productos p
+            LEFT JOIN categoria c ON p.id_categoria = c.id
+            WHERE p.nombre ILIKE $1 OR p.descripción ILIKE $1
+            ORDER BY p.nombre
+        `;
+        const response = await pool.query(query);
+        res.status(200).json(response.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al buscar productos' });
+    }
+};
+
+const obtenerTodosLosProductos = async (req, res) => {
+    try {
+        const query = `
+            SELECT p.*, c.nombre AS categoria_nombre
+            FROM productos p
+            LEFT JOIN categoria c ON p.id_categoria = c.id
+            ORDER BY p.nombre
+        `;
+        const response = await pool.query(query);
+        res.status(200).json(response.rows);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al obtener productos' });
+    }       
+};
+
+module.exports = { poblarTablas, buscarProductos, buscarCategorias, buscarProductosConQuery, obtenerTodosLosProductos };

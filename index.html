@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsqueda de Productos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+        }
+        
+        #searchInput {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        #clearButton {
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #clearButton:hover {
+            background-color: #da190b;
+        }
+        
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .no-results {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .precio {
+            text-align: right;
+        }
+        
+        .stock {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Catálogo de Productos</h1>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Buscar productos...">
+        <button id="clearButton">Limpiar búsqueda</button>
+    </div>
+    
+    <div id="messageContainer"></div>
+    
+    <table id="productsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>NOMBRE</th>
+                <th>DESCRIPCION</th>
+                <th>CATEGORIA</th>
+                <th>PRECIO</th>
+                <th>STOCK</th>
+            </tr>
+        </thead>
+        <tbody id="productsTableBody">
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let searchTimeout;
+        
+        const searchInput = document.getElementById('searchInput');
+        const clearButton = document.getElementById('clearButton');
+        const messageContainer = document.getElementById('messageContainer');
+        const productsTable = document.getElementById('productsTable');
+        const tableBody = document.getElementById('productsTableBody');
+        
+        
+        window.addEventListener('DOMContentLoaded', loadAllProducts);
+        
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query === '') {
+                loadAllProducts();
+            } else {
+                searchTimeout = setTimeout(() => {
+                    searchProducts(query);
+                }, 300); 
+            }
+        });
+        
+        clearButton.addEventListener('click', () => {
+            searchInput.value = '';
+            loadAllProducts();
+        });
+        
+        async function loadAllProducts() {
+            try {
+                showMessage('Cargando productos...', 'loading');
+                
+                const response = await fetch(`${API_URL}/productos`);
+                const products = await response.json();
+                
+                hideMessage();
+                displayProducts(products);
+            } catch (error) {
+                showMessage('Error al cargar los productos', 'error');
+                console.error('Error:', error);
+            }
+        }
+        
+        async function searchProducts(query) {
+            try {
+                showMessage('Buscando...', 'loading');
+                
+                const response = await fetch(`${API_URL}/productos/search?q=${encodeURIComponent(query)}`);
+                
+                if (response.status === 400) {
+                    const error = await response.json();
+                    showMessage(error.error, 'error');
+                    return;
+                }
+                
+                const products = await response.json();
+                
+                hideMessage();
+                
+                if (products.length === 0) {
+                    showMessage(`No encontramos productos que coincidan con '${query}'`, 'no-results');
+                    hideTable();
+                } else {
+                    displayProducts(products);
+                }
+            } catch (error) {
+                showMessage('Error en la búsqueda', 'error');
+                console.error('Error:', error);
+            }
+        }
+        
+        function displayProducts(products) {
+            tableBody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${product.nombre}</td>
+                    <td>${product.descripción}</td>
+                    <td>${product.categoria || 'Sin categoría'}</td>
+                    <td class="precio">$${parseFloat(product.precio).toFixed(2)}</td>
+                    <td class="stock">${product.stock}</td>
+                `;
+            });
+            
+            productsTable.style.display = 'table';
+        }
+        
+        function showMessage(message, type) {
+            messageContainer.innerHTML = `<div class="${type}">${message}</div>`;
+            if (type !== 'loading') {
+                hideTable();
+            }
+        }
+        
+        function hideMessage() {
+            messageContainer.innerHTML = '';
+        }
+        
+        function hideTable() {
+            productsTable.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

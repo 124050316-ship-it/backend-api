@@ -6,7 +6,5 @@ router.post('/poblar', poblarTablas);
 
 router.get('/productos/:termino', buscarProductos);
 router.get('/categorias/:termino', buscarCategorias);
-router.get('/productos/search', buscarProductosConQuery);
-router.get('/productos', obtenerTodosLosProductos);
 router.get('/productos', getProductos);
 module.exports = router;

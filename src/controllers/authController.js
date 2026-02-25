@@ -1,6 +1,8 @@
 const pool = require ('../config/db');
 const bcrypt = require('bcryptjs');
 
+const jwt = require('jsonwebtoken');
+
 const register = async (req, res) => {
     const { email, password } = req.body;
 
@@ -24,7 +26,41 @@ const register = async (req, res) => {
     } catch (error) {        
         console.error(error);
         res.status(500).json({ error: 'Error al registrar el usuario' });
-        }
-    };
+    }
+};
 
-    module.exports = { register };
+const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(400).json({ msg: 'Credenciales inválidas (Email)' });
+        }
+
+        const usuario = result.rows[0];
+        
+        const isMatch = await bcrypt.compare(password, usuario.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Credenciales inválidas (Password)' });
+        }
+
+        const payload = {
+            id: usuario.id,
+            rol: usuario.rol,
+            email: usuario.email
+        };
+
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        
+        res.json({ token });    
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al iniciar sesión' });
+    }
+};
+    module.exports = { register, login };

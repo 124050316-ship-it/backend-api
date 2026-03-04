@@ -90,4 +90,20 @@ const getProductos = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener productos' });
     }   
 };
-module.exports = { poblarTablas, buscarProductos, buscarCategorias, getProductos};
+
+const crearProducto = async (req, res) => {
+    try {
+        const { nombre, precio, stock, descripción, imagen_url, id_categoria } = req.body;
+        const query = `
+            INSERT INTO productos
+            (nombre, precio, stock, descripción, imagen_url, id_categoria)
+            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+        `;
+        const response = await pool.query(query, [nombre, precio, stock, descripción, imagen_url, id_categoria]);
+        res.status(201).json(response.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al crear producto' });
+    }
+};
+module.exports = { poblarTablas, buscarProductos, buscarCategorias, getProductos, crearProducto};

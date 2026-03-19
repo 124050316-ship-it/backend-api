@@ -4,7 +4,7 @@ const router = express.Router();
 const authmiddleware = require('../middlewares/authmiddleware');
 
 router.post('/poblar', poblarTablas);
-router.post('/', authmiddleware, crearProducto);
+router.post('/',  crearProducto);
 
 router.get('/productos/:termino', buscarProductos);
 router.get('/categorias/:termino', buscarCategorias);

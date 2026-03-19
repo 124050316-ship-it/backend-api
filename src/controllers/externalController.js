@@ -93,13 +93,13 @@ const getProductos = async (req, res) => {
 
 const crearProducto = async (req, res) => {
     try {
-        const { nombre, precio, stock, descripción, imagen_url, id_categoria } = req.body;
+        const { nombre, precio, stock, descripción, imagen_url, id_categoria, youtube_id } = req.body;
         const query = `
             INSERT INTO productos
-            (nombre, precio, stock, descripción, imagen_url, id_categoria)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
+            (nombre, precio, stock, descripción, imagen_url, id_categoria, youtube_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
         `;
-        const response = await pool.query(query, [nombre, precio, stock, descripción, imagen_url, id_categoria]);
+        const response = await pool.query(query, [nombre, precio, stock, descripción, imagen_url, id_categoria, youtube_id]);
         res.status(201).json(response.rows[0]);
     } catch (error) {
         console.error(error);
